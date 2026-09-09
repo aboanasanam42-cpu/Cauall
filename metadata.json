@@ -1,0 +1,6 @@
+{
+  "name": "المكتبة الشاملة في الرياضيات",
+  "description": "تطبيق المكتبة الشاملة في الرياضيات لمحاكاة وحساب الدوال، القوانين الرياضية، الهندسة الفراغية ثلاثية الأبعاد، والبحث الرياضي المتقدم.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
