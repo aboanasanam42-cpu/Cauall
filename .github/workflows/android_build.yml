@@ -23,15 +23,41 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Ensure Gradlew Executable
+      - name: Prepare Keystore and Environment
+        env:
+          SECRET_KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          SECRET_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SECRET_STORE_PASSWORD: ${{ secrets.CM_KEYSTORE_PASSWORD }}
+          SECRET_KEY_ALIAS: ${{ secrets.CM_KEY_ALIAS }}
+          SECRET_KEY_PASSWORD: ${{ secrets.CM_KEY_PASSWORD }}
         run: |
+          # Configure .env file with secrets
+          if [ ! -f ".env" ] && [ -f ".env.example" ]; then
+            cp .env.example .env
+          fi
+          if [ -n "$SECRET_GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY=$SECRET_GEMINI_API_KEY" >> .env
+          fi
+
+          # Prepare Keystore
+          if [ -n "$SECRET_KEYSTORE_BASE64" ]; then
+            echo "$SECRET_KEYSTORE_BASE64" | base64 -d > debug.keystore
+          elif [ -f "debug.keystore.base64" ] && [ ! -f "debug.keystore" ]; then
+            base64 -d debug.keystore.base64 > debug.keystore
+          fi
+
+          if [ ! -f "debug.keystore" ]; then
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+          # Ensure gradlew executable
           if [ ! -f "gradlew" ]; then
             gradle wrapper
           fi
           chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew assembleDebug --no-daemon --stacktrace --no-configuration-cache
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
